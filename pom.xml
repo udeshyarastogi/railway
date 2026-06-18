@@ -727,6 +727,7 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
@@ -749,9 +750,10 @@
                     </includeOnlyProperties>
                     <commitIdGenerationMode>full</commitIdGenerationMode>
                     <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-                    <!-- <format>json</format> -->
+                   
                 </configuration>
             </plugin>
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
