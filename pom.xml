@@ -774,6 +774,7 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
             <plugin>
                 <groupId>io.github.git-commit-id</groupId>
                 <artifactId>git-commit-id-maven-plugin</artifactId>
@@ -799,6 +800,7 @@
                     <format>json</format>
                 </configuration>
             </plugin>
+            -->
         </plugins>
     </build>
     <profiles>
