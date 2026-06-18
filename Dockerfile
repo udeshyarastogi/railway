@@ -69,7 +69,7 @@ ENV work_dir=/home/${container_user}
 RUN mkdir -p ${work_dir}/data
 
 # change volume to whichever storage directory you want to use for this container.
-VOLUME ${work_dir}/logs ${work_dir}/Glowroot
+#VOLUME ${work_dir}/logs ${work_dir}/Glowroot
 
 ADD ./target/mimoto-*.jar ./mimoto.jar
 #COPY ./target/mimoto-*.jar mimoto.jar
