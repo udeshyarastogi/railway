@@ -110,6 +110,117 @@ The project requires JDK 21, postgres and google client credentials
     mvn spring-boot:run -Dspring.profiles.active=local
     ```
 
+## Railway deployment without Docker
+
+This project is ready for GitHub to Railway automatic deployment using Railway Nixpacks. Do not deploy the Dockerfile for Railway.
+
+### What Railway uses
+
+- Java version: `21`, pinned in [system.properties](system.properties)
+- Build command: `mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true`
+- Start command: `./railway-start.sh`
+- Spring profiles: `default,prod`
+- Health check path: `/v1/mimoto/actuator/health`
+
+### Railway setup
+
+1. Push this repository to GitHub.
+2. In Railway, create a new project from the GitHub repository.
+3. Set the Railway service root directory to `mimoto`.
+4. Confirm Railway detects Nixpacks, not Docker.
+5. Add a Railway PostgreSQL service.
+6. Add a Railway Redis service.
+7. In the Mimoto service, set `SPRING_PROFILES_ACTIVE=default,prod`.
+8. Add the environment variables listed below.
+9. Deploy. Railway will run the Maven build and then start the jar with the Railway-provided `PORT`.
+
+### Required Railway variables
+
+Set these in the Mimoto service variables. Railway's PostgreSQL plugin usually provides `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`; reference or copy those values into the Mimoto service if they are not automatically shared.
+
+```properties
+SPRING_PROFILES_ACTIVE=default,prod
+APP_PUBLIC_URL=https://<your-railway-domain>
+INJI_WEB_URL=https://<your-inji-web-domain>
+
+PGHOST=<railway-postgres-host>
+PGPORT=<railway-postgres-port>
+PGDATABASE=<railway-postgres-database>
+PGUSER=<railway-postgres-user>
+PGPASSWORD=<railway-postgres-password>
+
+REDIS_HOST=<railway-redis-host>
+REDIS_PORT=<railway-redis-port>
+REDIS_PASSWORD=<railway-redis-password>
+
+GOOGLE_CLIENT_ID=<google-oauth-client-id>
+GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
+
+MOSIP_EVENT_SECRET=<websub-secret>
+MOSIP_PARTNER_P12_PASSWORD=<partner-p12-password>
+MOSIP_PARTNER_ENCRYPTION_KEY=<partner-encryption-key>
+TOKEN_REQUEST_PASSWORD=<token-request-password>
+TOKEN_REQUEST_SECRET_KEY=<token-request-secret-key>
+MOSIP_IAM_CLIENT_SECRET=<mosip-iam-client-secret>
+WALLET_BINDING_PARTNER_API_KEY=<wallet-binding-partner-api-key>
+OIDC_P12_PASSWORD=<oidc-p12-password>
+OIDC_P12_BASE64=<base64-encoded-oidckeystore-p12>
+
+KEYCLOAK_INTERNAL_URL=<keycloak-internal-url>
+KEYCLOAK_EXTERNAL_URL=<keycloak-external-url>
+MOSIP_MASTERDATA_URL=<mosip-masterdata-url>
+MOSIP_AUTHMANAGER_URL=<mosip-authmanager-url>
+MOSIP_RESIDENT_BASE_URL=<mosip-resident-base-url>
+MOSIP_ESIGNET_HOST=<mosip-esignet-host>
+MOSIP_WEBSUB_URL=<mosip-websub-url>
+MOSIP_DATA_SHARE_URL=<mosip-data-share-url>
+```
+
+Optional overrides:
+
+```properties
+JDBC_DATABASE_URL=jdbc:postgresql://<host>:<port>/<database>
+CORS_ALLOWED_ORIGINS=https://<your-inji-web-domain>
+KEYMANAGER_DATABASE_URL=jdbc:postgresql://<host>:<port>/<database>
+KEYMANAGER_DATABASE_USERNAME=<username>
+KEYMANAGER_DATABASE_PASSWORD=<password>
+KEYMANAGER_KEYSTORE_PASSWORD=<keystore-password>
+SAFETYNET_API_KEY=<google-safetynet-api-key>
+LOG_LEVEL_ROOT=INFO
+LOG_LEVEL_MOSIP=INFO
+LOG_LEVEL_MIMOTO=INFO
+```
+
+### Keystore variable
+
+Railway should receive the OIDC PKCS#12 keystore as an environment variable, not as a committed file. Create the base64 value locally:
+
+```bash
+base64 -i certs/oidckeystore.p12
+```
+
+Set the output as `OIDC_P12_BASE64`. At startup, [railway-start.sh](railway-start.sh) decodes it to `/tmp/oidckeystore.p12` and the `prod` profile points both OIDC and KeyManager configuration at that file.
+
+### Database initialization
+
+Railway PostgreSQL must have the Mimoto schema and tables before the app can serve wallet flows. Run the existing scripts against the Railway database:
+
+```bash
+cd db_scripts/inji_mimoto
+./deploy.sh deploy.properties
+```
+
+Use Railway's PostgreSQL connection details in `deploy.properties` when initializing the production database.
+
+### Local development remains the same
+
+The default local profile is still `default,local`, and local database defaults remain in [application-local.properties](src/main/resources/application-local.properties). For a local build and run:
+
+```bash
+mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
+mvn spring-boot:run -Dspring.profiles.active=local
+```
+
 ## Cache Providers Setup Guide
 
 To use Redis (or any other cache provider), the service must be **running** and **accessible to Mimoto**. Both services (cache provider and Mimoto) must be on the same Docker network.  

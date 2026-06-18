@@ -34,3 +34,10 @@ build/
 *.code-workspace
 .DS_Store
 data
+
+### Local secrets / runtime files ###
+.env
+.env.*
+certs/
+*.p12
+*.jks
