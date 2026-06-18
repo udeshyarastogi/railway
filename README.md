@@ -126,8 +126,8 @@ This project is ready for GitHub to Railway automatic deployment using Railway N
 
 1. Push this repository to GitHub.
 2. In Railway, create a new project from the GitHub repository.
-3. Set the Railway service root directory to `mimoto`.
-4. Confirm Railway detects Nixpacks, not Docker.
+3. If you deploy from the `udeshyarastogi/railway` repository, leave the Railway service root directory empty because this repository already contains the Mimoto service at its root. If you deploy from the original monorepo, set the service root directory to `mimoto`.
+4. Confirm Railway detects Nixpacks, not Docker. The Railway deployment branch intentionally does not include the Dockerfile.
 5. Add a Railway PostgreSQL service.
 6. Add a Railway Redis service.
 7. In the Mimoto service, set `SPRING_PROFILES_ACTIVE=default,prod`.
