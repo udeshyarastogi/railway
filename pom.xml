@@ -750,7 +750,7 @@
                     </includeOnlyProperties>
                     <commitIdGenerationMode>full</commitIdGenerationMode>
                     <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-                   
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
                 </configuration>
             </plugin>
             -->
@@ -797,6 +797,7 @@
                         <includeOnlyProperty>^git.branch$</includeOnlyProperty>
                     </includeOnlyProperties>
                     <commitIdGenerationMode>full</commitIdGenerationMode>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
                     <format>json</format>
                 </configuration>
             </plugin>

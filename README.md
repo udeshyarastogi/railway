@@ -120,7 +120,7 @@ This project is ready for GitHub to Railway automatic deployment using Railway N
 - Build command: `mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true`
 - Start command: `./railway-start.sh`
 - Spring profiles: `default,prod`
-- Health check path: `/v1/mimoto/actuator/health`
+- Railway healthcheck: disabled in `railway.json` because actuator health depends on production database/Redis readiness
 
 ### Railway setup
 
