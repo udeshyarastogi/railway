@@ -29,6 +29,7 @@ else
 fi
 
 exec java \
+  -Dserver.address="${SERVER_ADDRESS:-0.0.0.0}" \
   -Dserver.port="${PORT:-8099}" \
   -Dspring.profiles.active="${SPRING_PROFILES_ACTIVE:-default,prod}" \
   -Dspring.cloud.config.enabled="${SPRING_CLOUD_CONFIG_ENABLED:-false}" \
