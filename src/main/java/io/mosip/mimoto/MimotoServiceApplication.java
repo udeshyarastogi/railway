@@ -22,6 +22,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import java.io.InputStream;
+
 
 @SpringBootApplication(scanBasePackages = {
         "io.mosip.mimoto.*",
@@ -72,13 +74,14 @@ public class MimotoServiceApplication {
     }
 
     public static JSONObject getGitProp() {
-        try {
-            return (new ObjectMapper()).readValue(
-                MimotoServiceApplication.class.getClassLoader().getResourceAsStream("build.json"),
-                JSONObject.class
-            );
+        try (InputStream buildInfo = MimotoServiceApplication.class.getClassLoader().getResourceAsStream("build.json")) {
+            if (buildInfo == null) {
+                log.debug("build.json metadata file is not present.");
+                return new JSONObject();
+            }
+            return (new ObjectMapper()).readValue(buildInfo, JSONObject.class);
         } catch (Exception e) {
-            log.error("Error when trying to read build.json file: " + e);
+            log.warn("Unable to read build.json metadata file: {}", e.getMessage());
         }
         return new JSONObject();
     }

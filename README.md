@@ -132,7 +132,8 @@ This project is ready for GitHub to Railway automatic deployment using Railway N
 6. Add a Railway Redis service.
 7. In the Mimoto service, set `SPRING_PROFILES_ACTIVE=default,prod`.
 8. Add the environment variables listed below.
-9. Deploy. Railway will run the Maven build and then start the jar with the Railway-provided `PORT`.
+9. For the first deployment against a new Railway Postgres database, set `INIT_DB=true`. After the first successful deployment, you can leave it enabled because the script skips initialization when the schema already exists.
+10. Deploy. Railway will run the Maven build and then start the jar with the Railway-provided `PORT`.
 
 ### Required Railway variables
 
@@ -140,6 +141,7 @@ Set these in the Mimoto service variables. Railway's PostgreSQL plugin usually p
 
 ```properties
 SPRING_PROFILES_ACTIVE=default,prod
+INIT_DB=true
 APP_PUBLIC_URL=https://<your-railway-domain>
 INJI_WEB_URL=https://<your-inji-web-domain>
 
