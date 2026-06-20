@@ -1,11 +1,11 @@
 [variables]
-NIXPACKS_JDK_VERSION = "17"
+NIXPACKS_JDK_VERSION = "21"
 
 [phases.setup]
-nixPkgs = ["jdk17_headless", "maven", "postgresql"]
+nixPkgs = ["jdk21_headless", "maven", "postgresql"]
 
 [phases.build]
-cmds = ["mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true"]
+cmds = ["java -version", "mvn -version", "mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true"]
 
 [start]
 cmd = "./railway-start.sh"

@@ -42,8 +42,7 @@
         <vertx.version>3.9.1</vertx.version>
 
         <!-- maven -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
         <maven.compiler.version>3.8.0</maven.compiler.version>
         <maven.jar.plugin.version>3.0.2</maven.jar.plugin.version>
         <maven.war.plugin.version>3.1.0</maven.war.plugin.version>
@@ -632,6 +631,10 @@
                         </goals>
                         <configuration>
                             <rules>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                    <message>Mimoto depends on MOSIP libraries compiled for Java 21. Build with JDK 21 or newer.</message>
+                                </requireJavaVersion>
                                 <bannedDependencies>
                                     <excludes>
                                         <exclude>io.mosip.kernel:kernel-parent</exclude>
@@ -648,8 +651,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.version}</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
             <plugin>
