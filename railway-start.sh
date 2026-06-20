@@ -5,12 +5,10 @@ if [ -z "${DATABASE_URL:-}" ] && [ -n "${DATABASE_PRIVATE_URL:-}" ]; then
   export DATABASE_URL="$DATABASE_PRIVATE_URL"
 fi
 
-if [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${SPRING_DATASOURCE_URL:-}" ]; then
-  export JDBC_DATABASE_URL="$SPRING_DATASOURCE_URL"
-fi
-
 if [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${PGHOST:-}" ]; then
   export JDBC_DATABASE_URL="jdbc:postgresql://${PGHOST}:${PGPORT:-5432}/${PGDATABASE:-postgres}"
+elif [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${SPRING_DATASOURCE_URL:-}" ]; then
+  export JDBC_DATABASE_URL="$SPRING_DATASOURCE_URL"
 elif [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${DATABASE_URL:-}" ]; then
   export JDBC_DATABASE_URL="$(printf '%s' "$DATABASE_URL" | sed 's#^postgresql://#jdbc:postgresql://#; s#^postgres://#jdbc:postgresql://#')"
 fi
@@ -39,10 +37,7 @@ if [ -z "${REDIS_PASSWORD:-}" ] && [ -n "${REDISPASSWORD:-}" ]; then
   export REDIS_PASSWORD="$REDISPASSWORD"
 fi
 
-if [ -n "${REDIS_URL:-}" ]; then
-  export SESSION_STORE_TYPE="${SESSION_STORE_TYPE:-redis}"
-  export CACHE_TYPE="${CACHE_TYPE:-redis}"
-elif [ -n "${REDIS_HOST:-}" ]; then
+if [ "${USE_REDIS:-false}" = "true" ]; then
   export SESSION_STORE_TYPE="${SESSION_STORE_TYPE:-redis}"
   export CACHE_TYPE="${CACHE_TYPE:-redis}"
 fi
@@ -151,11 +146,28 @@ SQL
   fi
 fi
 
+echo "Railway startup configuration:"
+echo "  port=${PORT:-8099}"
+echo "  profiles=${SPRING_PROFILES_ACTIVE:-default,prod}"
+echo "  db_host=${PGHOST:-from-url}"
+echo "  db_name=${PGDATABASE:-from-url}"
+echo "  db_schema=${DB_SCHEMA:-mimoto}"
+echo "  session_store=${SESSION_STORE_TYPE:-caffeine}"
+echo "  cache_type=${CACHE_TYPE:-caffeine}"
+echo "  redis_configured=$([ -n "${REDIS_URL:-}${REDIS_HOST:-}" ] && echo true || echo false)"
+echo "  redis_enabled=${USE_REDIS:-false}"
+echo "  db_bootstrap=${auto_init_db:-false}"
+
 set -- \
+  "-XX:MaxRAMPercentage=${JAVA_MAX_RAM_PERCENTAGE:-70}" \
+  "-XX:InitialRAMPercentage=${JAVA_INITIAL_RAM_PERCENTAGE:-10}" \
+  "-XX:MaxMetaspaceSize=${JAVA_MAX_METASPACE_SIZE:-192m}" \
+  "-XX:+ExitOnOutOfMemoryError" \
   "-Dserver.address=${SERVER_ADDRESS:-0.0.0.0}" \
   "-Dserver.port=${PORT:-8099}" \
   "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-default,prod}" \
-  "-Dspring.cloud.config.enabled=${SPRING_CLOUD_CONFIG_ENABLED:-false}"
+  "-Dspring.cloud.config.enabled=${SPRING_CLOUD_CONFIG_ENABLED:-false}" \
+  "-Dspring.jmx.enabled=${SPRING_JMX_ENABLED:-false}"
 
 if [ -n "${JDBC_DATABASE_URL:-}" ]; then
   set -- "$@" "-Dspring.datasource.url=${JDBC_DATABASE_URL}" "-Dkeymanager_database_url=${JDBC_DATABASE_URL}"
@@ -169,7 +181,7 @@ if [ -n "${PGPASSWORD:-}" ]; then
   set -- "$@" "-Dspring.datasource.password=${PGPASSWORD}" "-Dkeymanager_database_password=${PGPASSWORD}"
 fi
 
-if [ -n "${REDIS_URL:-}" ]; then
+if [ -n "${REDIS_URL:-}" ] && { [ "${USE_REDIS:-false}" = "true" ] || [ "${SESSION_STORE_TYPE:-}" = "redis" ] || [ "${CACHE_TYPE:-}" = "redis" ]; }; then
   set -- "$@" "-Dspring.data.redis.url=${REDIS_URL}"
 fi
 

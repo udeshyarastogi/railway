@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "mimoto.issuers.validation.enabled", havingValue = "true", matchIfMissing = true)
 public class IssuersValidationConfig implements ApplicationRunner {
     @Autowired
     IssuersService issuersService;

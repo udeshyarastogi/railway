@@ -183,6 +183,16 @@ Optional overrides:
 ```properties
 JDBC_DATABASE_URL=jdbc:postgresql://<host>:<port>/<database>
 CORS_ALLOWED_ORIGINS=https://<your-inji-web-domain>
+USE_REDIS=false
+SESSION_STORE_TYPE=caffeine
+CACHE_TYPE=caffeine
+MIMOTO_ISSUERS_VALIDATION_ENABLED=false
+MOSIP_WEBSUB_SUBSCRIPTION_ENABLED=false
+MANAGEMENT_HEALTH_DB_ENABLED=false
+MANAGEMENT_HEALTH_REDIS_ENABLED=false
+JAVA_MAX_RAM_PERCENTAGE=70
+JAVA_INITIAL_RAM_PERCENTAGE=10
+JAVA_MAX_METASPACE_SIZE=192m
 KEYMANAGER_DATABASE_URL=jdbc:postgresql://<host>:<port>/<database>
 KEYMANAGER_DATABASE_USERNAME=<username>
 KEYMANAGER_DATABASE_PASSWORD=<password>
@@ -205,7 +215,13 @@ Set the output as `OIDC_P12_BASE64`. At startup, [railway-start.sh](railway-star
 
 ### Database initialization
 
-Railway PostgreSQL must have the Mimoto schema and tables before the app can serve wallet flows. Run the existing scripts against the Railway database:
+Railway PostgreSQL must have the Mimoto schema and tables before the app can serve wallet flows. The Railway start script initializes the `mimoto` schema automatically when `PGHOST`, `PGUSER`, and `PGPASSWORD` or `DATABASE_URL` are present. To disable automatic initialization, set:
+
+```properties
+INIT_DB=false
+```
+
+For manual initialization instead, run the existing scripts against the Railway database:
 
 ```bash
 cd db_scripts/inji_mimoto
@@ -213,6 +229,14 @@ cd db_scripts/inji_mimoto
 ```
 
 Use Railway's PostgreSQL connection details in `deploy.properties` when initializing the production database.
+
+### Railway health and memory
+
+Railway healthchecks use `/v1/mimoto/actuator/health/railway`, which is configured as a lightweight ping-only health group so Redis, Postgres, Keycloak, and MOSIP downstream services do not prevent the HTTP server from becoming healthy. The production profile disables issuer validation and WebSub subscription at startup by default; enable them only after the related MOSIP services and URLs are configured.
+
+Redis variables may be present without forcing Redis-backed session/cache storage. Set `USE_REDIS=true` or explicitly set `SESSION_STORE_TYPE=redis` and `CACHE_TYPE=redis` when the Redis service is ready and you want distributed session/cache storage.
+
+The start script caps JVM memory for Railway with `JAVA_MAX_RAM_PERCENTAGE`, `JAVA_INITIAL_RAM_PERCENTAGE`, and `JAVA_MAX_METASPACE_SIZE`. Increase those values only if the Railway service has enough memory.
 
 ### Local development remains the same
 

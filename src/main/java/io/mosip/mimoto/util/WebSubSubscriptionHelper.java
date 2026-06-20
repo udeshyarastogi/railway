@@ -34,6 +34,9 @@ public class WebSubSubscriptionHelper {
     @Value("${mosip.event.topic}")
     private String topic;
 
+    @Value("${mosip.websub.subscription.enabled:true}")
+    private boolean webSubSubscriptionEnabled;
+
     @Autowired
     SubscriptionClient<SubscriptionChangeRequest, UnsubscriptionRequest, SubscriptionChangeResponse> sb;
 
@@ -45,6 +48,10 @@ public class WebSubSubscriptionHelper {
         initialDelayString  = "${mosip.event.delay-millisecs}"
     )
     public void initSubscriptions() {
+        if (!webSubSubscriptionEnabled) {
+            log.info("WebSub subscription initialization is disabled.");
+            return;
+        }
         log.info("Initializing subscriptions...");
         subscribeEvent(topic, callBackUrl, webSubSecret);
     }
