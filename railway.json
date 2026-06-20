@@ -1,12 +1,12 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "RAILPACK",
+    "builder": "NIXPACKS",
     "buildCommand": "mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true"
   },
   "deploy": {
     "startCommand": "./railway-start.sh",
-    "healthcheckPath": "/v1/mimoto/v3/api-docs",
+    "healthcheckPath": "/v1/mimoto/actuator/health/railway",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10

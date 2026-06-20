@@ -5,17 +5,44 @@ if [ -z "${DATABASE_URL:-}" ] && [ -n "${DATABASE_PRIVATE_URL:-}" ]; then
   export DATABASE_URL="$DATABASE_PRIVATE_URL"
 fi
 
+if [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${SPRING_DATASOURCE_URL:-}" ]; then
+  export JDBC_DATABASE_URL="$SPRING_DATASOURCE_URL"
+fi
+
 if [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${PGHOST:-}" ]; then
   export JDBC_DATABASE_URL="jdbc:postgresql://${PGHOST}:${PGPORT:-5432}/${PGDATABASE:-postgres}"
 elif [ -z "${JDBC_DATABASE_URL:-}" ] && [ -n "${DATABASE_URL:-}" ]; then
   export JDBC_DATABASE_URL="$(printf '%s' "$DATABASE_URL" | sed 's#^postgresql://#jdbc:postgresql://#; s#^postgres://#jdbc:postgresql://#')"
 fi
 
+if [ -z "${PGUSER:-}" ] && [ -n "${SPRING_DATASOURCE_USERNAME:-}" ]; then
+  export PGUSER="$SPRING_DATASOURCE_USERNAME"
+fi
+
+if [ -z "${PGPASSWORD:-}" ] && [ -n "${SPRING_DATASOURCE_PASSWORD:-}" ]; then
+  export PGPASSWORD="$SPRING_DATASOURCE_PASSWORD"
+fi
+
 if [ -z "${REDIS_URL:-}" ] && [ -n "${REDIS_PRIVATE_URL:-}" ]; then
   export REDIS_URL="$REDIS_PRIVATE_URL"
 fi
 
+if [ -z "${REDIS_HOST:-}" ] && [ -n "${REDISHOST:-}" ]; then
+  export REDIS_HOST="$REDISHOST"
+fi
+
+if [ -z "${REDIS_PORT:-}" ] && [ -n "${REDISPORT:-}" ]; then
+  export REDIS_PORT="$REDISPORT"
+fi
+
+if [ -z "${REDIS_PASSWORD:-}" ] && [ -n "${REDISPASSWORD:-}" ]; then
+  export REDIS_PASSWORD="$REDISPASSWORD"
+fi
+
 if [ -n "${REDIS_URL:-}" ]; then
+  export SESSION_STORE_TYPE="${SESSION_STORE_TYPE:-redis}"
+  export CACHE_TYPE="${CACHE_TYPE:-redis}"
+elif [ -n "${REDIS_HOST:-}" ]; then
   export SESSION_STORE_TYPE="${SESSION_STORE_TYPE:-redis}"
   export CACHE_TYPE="${CACHE_TYPE:-redis}"
 fi
@@ -47,16 +74,21 @@ else
   fi
 fi
 
-if [ "${INIT_DB:-false}" = "true" ]; then
+auto_init_db="${INIT_DB:-}"
+if [ -z "$auto_init_db" ] && { [ -n "${PGHOST:-}" ] || [ -n "${DATABASE_URL:-}" ]; }; then
+  auto_init_db=true
+fi
+
+if [ "$auto_init_db" = "true" ]; then
   if ! command -v psql >/dev/null 2>&1; then
-    echo "INIT_DB=true but psql is not available in the Railway image." >&2
+    echo "Database bootstrap is enabled but psql is not available in the Railway image." >&2
     exit 1
   fi
 
   db_url="${DATABASE_URL:-}"
   if [ -z "$db_url" ]; then
     if [ -z "${PGHOST:-}" ] || [ -z "${PGUSER:-}" ] || [ -z "${PGPASSWORD:-}" ]; then
-      echo "INIT_DB=true requires DATABASE_URL or PGHOST, PGUSER, and PGPASSWORD." >&2
+      echo "Database bootstrap requires DATABASE_URL or PGHOST, PGUSER, and PGPASSWORD." >&2
       exit 1
     fi
     db_url="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT:-5432}/${PGDATABASE:-postgres}"
@@ -119,14 +151,26 @@ SQL
   fi
 fi
 
-java_args="-Dserver.address=${SERVER_ADDRESS:-0.0.0.0} \
-  -Dserver.port=${PORT:-8099} \
-  -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-default,prod} \
-  -Dspring.cloud.config.enabled=${SPRING_CLOUD_CONFIG_ENABLED:-false}"
+set -- \
+  "-Dserver.address=${SERVER_ADDRESS:-0.0.0.0}" \
+  "-Dserver.port=${PORT:-8099}" \
+  "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-default,prod}" \
+  "-Dspring.cloud.config.enabled=${SPRING_CLOUD_CONFIG_ENABLED:-false}"
 
-if [ -n "${REDIS_URL:-}" ]; then
-  java_args="$java_args -Dspring.data.redis.url=${REDIS_URL}"
+if [ -n "${JDBC_DATABASE_URL:-}" ]; then
+  set -- "$@" "-Dspring.datasource.url=${JDBC_DATABASE_URL}" "-Dkeymanager_database_url=${JDBC_DATABASE_URL}"
 fi
 
-exec java $java_args \
-  -jar target/mimoto-0.22.0.jar
+if [ -n "${PGUSER:-}" ]; then
+  set -- "$@" "-Dspring.datasource.username=${PGUSER}" "-Dkeymanager_database_username=${PGUSER}"
+fi
+
+if [ -n "${PGPASSWORD:-}" ]; then
+  set -- "$@" "-Dspring.datasource.password=${PGPASSWORD}" "-Dkeymanager_database_password=${PGPASSWORD}"
+fi
+
+if [ -n "${REDIS_URL:-}" ]; then
+  set -- "$@" "-Dspring.data.redis.url=${REDIS_URL}"
+fi
+
+exec java "$@" -jar target/mimoto-0.22.0.jar
