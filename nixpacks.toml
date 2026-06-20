@@ -1,8 +1,8 @@
 [variables]
-NIXPACKS_JDK_VERSION = "21"
+NIXPACKS_JDK_VERSION = "17"
 
 [phases.setup]
-nixPkgs = ["jdk21_headless", "maven", "postgresql"]
+nixPkgs = ["jdk17_headless", "maven", "postgresql"]
 
 [phases.build]
 cmds = ["mvn clean package -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true"]
